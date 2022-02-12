@@ -4,6 +4,7 @@ const APP = {
     init: () => {
         APP.registerSW();
         APP.addListeners();
+        APP.getConfig();
         IDB.initDB();
         console.log('init')
     },
@@ -39,7 +40,9 @@ const SEARCH = {
     baseUrl : 'https://api.themoviedb.org/3/',
     api: 'f8950444a4c0c67cbff1553083941ae3',
     movieList: [],
-    handle: () => {
+    handle: (ev) => {
+        ev.preventDefault();
+        console.log('handling search')
         let searchInput = document.querySelector('input').value
         // const url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`
         let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
@@ -57,6 +60,7 @@ const SEARCH = {
                 SEARCH.movieList = data.results
                 console.log(SEARCH.movieList)
                 IDB.addMoviesToDB();
+                MEDIA.buildCards(data.results)
         })
             .catch(err => {
                 console.warn(err.message)
@@ -107,5 +111,24 @@ const IDB = {
 }
 
 const MEDIA = {
+    buildCards: (data) => {
+        console.log(document.querySelector('.display-area'))
+        document.querySelector('.display-area').innerHTML = ''
+        data.forEach(movie => {
+            let li = document.createElement('li');
+            li.innerHTML = 
+            `
+            <div class="card" style="width: 18rem;">
+                <img class="card-img-top" src="${`${APP.imageUrl}w154${movie.poster_path}`}" alt="Card image cap">
+                <div class="card-body">
+                <h5 class="card-title">${movie.original_title}</h5>
+                <p class="card-text">${movie.overview}</p>
+                <a href="#" class="btn btn-primary">Similar movies</a>
+                </div>
+            </div>
+            `
+            document.querySelector('.display-area').append(li)
+        })
+    }
 }
 document.addEventListener('DOMContentLoaded', APP.init);
