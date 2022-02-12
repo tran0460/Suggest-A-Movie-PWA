@@ -54,6 +54,9 @@ const SEARCH = {
             .then(data => {
                 console.log(url)
                 console.log(data)
+                SEARCH.movieList = data.results
+                console.log(SEARCH.movieList)
+                IDB.addMoviesToDB();
         })
             .catch(err => {
                 console.warn(err.message)
@@ -64,24 +67,42 @@ const SEARCH = {
 const IDB = {
     DB: null,
     initDB: () => {
-        let version = 2
-        let dbOpenRequest = indexedDB.open('movieDB', version);
+        let version = 1
+        let dbOpenRequest = indexedDB.open('SuggestAMovieDB', version);
             dbOpenRequest.onupgradeneeded = function (ev) {
-            DB = ev.target.result; 
+            IDB.DB = ev.target.result; 
             try {
-                DB.deleteObjectStore('movieStore');
+                DB.deleteObjectStore('searchStore');
+                DB.deleteObjectStore('recommendedStore');
             } catch (err) {
                 console.log('error deleting old DB');
             }
-            let searchStore = DB.createObjectStore('searchStore');
-            let resultStore = DB.createObjectStore('resultStore');
+            let searchStoreOptions = {
+                keyPath: 'id',
+                autoIncrement: false,
+            };
+            IDB.DB.createObjectStore('searchStore', searchStoreOptions);
+            IDB.DB.createObjectStore('recommendedStore');
         }
             dbOpenRequest.onerror = function (err) {
             console.warn(err.message)
         }
             dbOpenRequest.onsuccess = function (ev) {
-
+            IDB.DB = dbOpenRequest.result
+            console.log(IDB.DB.name, `ready to be used.`);
         }
+    },
+    addMoviesToDB: () => {
+        console.log(SEARCH.movieList)
+        let tx = IDB.DB.transaction('searchStore', 'readwrite');
+        let searchStore = tx.objectStore('searchStore');
+        console.log(searchStore)
+        console.log('preparing to add movies')
+        SEARCH.movieList.forEach(movie => {
+            let addRequest = searchStore.add(movie); 
+            addRequest.onsuccess = (ev) => {
+            }
+        })
     }
 }
 
