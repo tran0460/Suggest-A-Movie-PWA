@@ -43,12 +43,16 @@ const SEARCH = {
     navigate: (ev) => {
         ev.preventDefault();
         // location.pathname = 'result.html'
-        SEARCH.handle();
+        SEARCH.handleResult();
     },
-    handle: (ev) => {
-        // ev.preventDefault();
-        console.log('handling search')
+    handleResult: () => {
+        // displays the text "Search result for"
         let searchInput = document.querySelector('input').value
+        let p = document.createElement('p')
+        p.classList.add('h1', 'text-center')
+        p.textContent = `Search results for: ${searchInput}`
+        document.querySelector('.searchResults').prepend(p)
+        //fetch the url
         let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
         SEARCH.fetch(url)
     },
@@ -74,7 +78,10 @@ const SEARCH = {
     
     handleSimilar:(ev) => {
         let id = ev.currentTarget.id
-        console.log(id)
+        let p = document.createElement('p')
+        p.classList.add('h1', 'text-center')
+        p.textContent = `Similar movies to: ${ev.currentTarget.querySelector('.card-title').textContent}`
+        document.querySelector('.similarResults').prepend(p)
         let url = `${SEARCH.baseUrl}/movie/${id}/similar?api_key=${SEARCH.api}`
         SEARCH.fetch(url)
     }
@@ -132,7 +139,6 @@ const IDB = {
 
 const MEDIA = {
     buildCards: (data) => {
-        console.log('building cards')
         document.querySelector('.display-area').innerHTML = ''
         data.forEach(movie => {
             let li = document.createElement('li');
