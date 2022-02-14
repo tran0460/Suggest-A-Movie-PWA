@@ -6,9 +6,15 @@
 .forOfor {
     font-size: 10rem !important;
 }
+main {
+    min-height: 100vh;
+  }
 img {
     max-height: 20rem;
     padding: 1rem;
+}
+img.tmdb {
+    height: 4rem !important;
 }
 ol {
     padding-left: 0 !important;
