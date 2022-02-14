@@ -43,9 +43,6 @@ const SEARCH = {
     navigate: (ev) => {
         ev.preventDefault();
         // location.pathname = 'result.html'
-        // SEARCH.navigate.onsuccess = (ev) => {
-        //     SEARCH.handle();
-        // }
         SEARCH.handle();
     },
     handle: (ev) => {
@@ -63,13 +60,24 @@ const SEARCH = {
         })
             .then(data => {
                 SEARCH.movieList = data.results
-                IDB.addMoviesToDB();
+                if (url.includes('similar')) {
+                    IDB.addMoviesToSimilarDB();
+                } else {
+                    IDB.addMoviesToSearchDB();
+                }
                 MEDIA.buildCards(data.results)
         })
             .catch(err => {
                 console.warn(err.message)
         })
     },
+    
+    handleSimilar:(ev) => {
+        let id = ev.currentTarget.id
+        console.log(id)
+        let url = `${SEARCH.baseUrl}/movie/${id}/similar?api_key=${SEARCH.api}`
+        SEARCH.fetch(url)
+    }
 }
 
 const IDB = {
@@ -81,16 +89,16 @@ const IDB = {
             IDB.DB = ev.target.result; 
             try {
                 DB.deleteObjectStore('searchStore');
-                DB.deleteObjectStore('recommendedStore');
+                DB.deleteObjectStore('similarStore');
             } catch (err) {
                 console.log('error deleting old DB');
             }
-            let searchStoreOptions = {
+            let options = {
                 keyPath: 'id',
                 autoIncrement: false,
             };
-            IDB.DB.createObjectStore('searchStore', searchStoreOptions);
-            IDB.DB.createObjectStore('recommendedStore');
+            IDB.DB.createObjectStore('searchStore', options);
+            IDB.DB.createObjectStore('similarStore', options);
         }
             dbOpenRequest.onerror = function (err) {
             console.warn(err.message)
@@ -100,14 +108,22 @@ const IDB = {
             console.log(IDB.DB.name, `ready to be used.`);
         }
     },
-    addMoviesToDB: () => {
-        console.log(SEARCH.movieList)
+    addMoviesToSearchDB: () => {
         let tx = IDB.DB.transaction('searchStore', 'readwrite');
         let searchStore = tx.objectStore('searchStore');
-        console.log(searchStore)
-        console.log('preparing to add movies')
+        console.log('preparing to add movies to search store');
         SEARCH.movieList.forEach(movie => {
             let addRequest = searchStore.add(movie); 
+            addRequest.onsuccess = (ev) => {
+            }
+        })
+    },
+    addMoviesToSimilarDB: () => {
+        let tx = IDB.DB.transaction('similarStore', 'readwrite');
+        let similarStore = tx.objectStore('similarStore');
+        console.log('preparing to add movies to similarStore')
+        SEARCH.movieList.forEach(movie => {
+            let addRequest = similarStore.add(movie); 
             addRequest.onsuccess = (ev) => {
             }
         })
@@ -126,16 +142,19 @@ const MEDIA = {
             }
             li.innerHTML = 
             `
-            <div class="card m-2" style="width: 18rem;">
+            <div class="card m-2 pe-none" id="${movie.id}"style="width: 18rem;">
                 <img class="card-img-top" src="${source}" alt="Card image cap">
                 <div class="card-body">
                 <h5 class="card-title">${movie.original_title}</h5>
                 <p class="card-text">${movie.overview}</p>
-                <a href="#" class="btn btn-primary">Similar movies</a>
+                <a  class="btn btn-primary pe-auto" id="get-similar">Similar movies</a>
                 </div>
             </div>
             `
             document.querySelector('.display-area').append(li)
+        })
+        document.querySelectorAll('div.card').forEach (btn => {
+            btn.addEventListener('click', SEARCH.handleSimilar)
         })
     }
 }
