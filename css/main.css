@@ -1,6 +1,10 @@
+
 .navContainer {
     display: flex !important;
     justify-content: center !important;
+}
+.forOfor {
+    font-size: 10rem !important;
 }
 img {
     max-height: 20rem;

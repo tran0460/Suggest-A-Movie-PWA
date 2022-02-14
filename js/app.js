@@ -123,17 +123,6 @@ const MEDIA = {
             let source =  `${APP.imageUrl}w154${movie.poster_path}`
             if (movie.poster_path === null) {
                 source = './img/placeholder.png'
-                // li.innerHTML = 
-                // `
-                // <div class="card m-2" style="width: 18rem;">
-                //     <img class="card-img-top" src="${source}" alt="Card image cap">
-                //     <div class="card-body">
-                //     <h5 class="card-title">${movie.original_title}</h5>
-                //     <p class="card-text">${movie.overview}</p>
-                //     <a href="#" class="btn btn-primary">Similar movies</a>
-                //     </div>
-                // </div>
-                // `
             }
             li.innerHTML = 
             `
