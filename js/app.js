@@ -26,7 +26,7 @@ const APP = {
             alert(`Theres been an ERROR!!!!!!!! ${error.name}, ${error.message}`))
     },
     addListeners: () => {
-        document.querySelector('.searchBtn').addEventListener('click', SEARCH.handle)
+        document.querySelector('.searchBtn').addEventListener('click', SEARCH.navigate)
     },
     registerSW: () => {
     navigator.serviceWorker.register('/js/sw.js').catch(function (err) {
@@ -40,11 +40,18 @@ const SEARCH = {
     baseUrl : 'https://api.themoviedb.org/3/',
     api: 'f8950444a4c0c67cbff1553083941ae3',
     movieList: [],
-    handle: (ev) => {
+    navigate: (ev) => {
         ev.preventDefault();
+        // location.pathname = 'result.html'
+        // SEARCH.navigate.onsuccess = (ev) => {
+        //     SEARCH.handle();
+        // }
+        SEARCH.handle();
+    },
+    handle: (ev) => {
+        // ev.preventDefault();
         console.log('handling search')
         let searchInput = document.querySelector('input').value
-        // const url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`
         let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
         SEARCH.fetch(url)
     },
@@ -55,10 +62,7 @@ const SEARCH = {
                 return response.json()
         })
             .then(data => {
-                console.log(url)
-                console.log(data)
                 SEARCH.movieList = data.results
-                console.log(SEARCH.movieList)
                 IDB.addMoviesToDB();
                 MEDIA.buildCards(data.results)
         })
@@ -112,14 +116,29 @@ const IDB = {
 
 const MEDIA = {
     buildCards: (data) => {
-        console.log(document.querySelector('.display-area'))
+        console.log('building cards')
         document.querySelector('.display-area').innerHTML = ''
         data.forEach(movie => {
             let li = document.createElement('li');
+            let source =  `${APP.imageUrl}w154${movie.poster_path}`
+            if (movie.poster_path === null) {
+                source = './img/placeholder.png'
+                // li.innerHTML = 
+                // `
+                // <div class="card m-2" style="width: 18rem;">
+                //     <img class="card-img-top" src="${source}" alt="Card image cap">
+                //     <div class="card-body">
+                //     <h5 class="card-title">${movie.original_title}</h5>
+                //     <p class="card-text">${movie.overview}</p>
+                //     <a href="#" class="btn btn-primary">Similar movies</a>
+                //     </div>
+                // </div>
+                // `
+            }
             li.innerHTML = 
             `
-            <div class="card" style="width: 18rem;">
-                <img class="card-img-top" src="${`${APP.imageUrl}w154${movie.poster_path}`}" alt="Card image cap">
+            <div class="card m-2" style="width: 18rem;">
+                <img class="card-img-top" src="${source}" alt="Card image cap">
                 <div class="card-body">
                 <h5 class="card-title">${movie.original_title}</h5>
                 <p class="card-text">${movie.overview}</p>

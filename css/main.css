@@ -2,6 +2,20 @@
     display: flex !important;
     justify-content: center !important;
 }
+img {
+    max-height: 20rem;
+    padding: 1rem;
+}
+ol {
+    padding-left: 0 !important;
+}
+li {
+    list-style-type: none;
+}
+.card-text {
+    max-height: 5rem;
+    overflow: auto;
+}
 @media only screen and (min-width: 37.5em) {
     .navContainer {
         justify-content: space-between !important;
