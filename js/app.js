@@ -6,7 +6,8 @@ const APP = {
         APP.addListeners();
         APP.getConfig();
         IDB.initDB();
-        console.log('init')
+        APP.checkURL();
+        // console.log('init')
     },
     getConfig: () => {
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
@@ -35,23 +36,30 @@ const APP = {
     navigator.serviceWorker.ready.then((registration) => {
         });
     },
+    checkURL: () => {
+
+    }
 }
 const SEARCH = {
     baseUrl : 'https://api.themoviedb.org/3/',
     api: 'f8950444a4c0c67cbff1553083941ae3',
     movieList: [],
+    input: null,
+    movieName: null,
     navigate: (ev) => {
         ev.preventDefault();
+        if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''};
+        SEARCH.movieList = [];
         // location.pathname = 'result.html'
         SEARCH.handleResult();
     },
     handleResult: () => {
-        SEARCH.movieList = [];
         // displays the text "Search result for"
         if (document.querySelector('p.text-center')) {
             document.querySelector('p.text-center').textContent = ''
         }
         let searchInput = document.querySelector('input').value
+        SEARCH.input = searchInput;
         if (location.pathname.includes('result')){
         let p = document.createElement('p')
         p.classList.add('h1', 'text-center')
@@ -60,24 +68,20 @@ const SEARCH = {
         }
         let tx = IDB.DB.transaction('searchStore', 'readwrite');
         let searchStore = tx.objectStore('searchStore');
-        let getRequest = searchStore.getAll()
-        getRequest.onsuccess = (ev) => {
-            ev.target.result.forEach(movie => {
-                if (movie.original_title.toLowerCase().includes(searchInput.toLowerCase())) {
-                    console.log('found match')
-                    SEARCH.movieList.push(movie)
-                }
-            })
-            if (SEARCH.movieList.length != 0) {
+        let getData = searchStore.get(SEARCH.input.toLowerCase())
+        getData.onsuccess = (ev) => {
+            if (ev.target.result != undefined) {
+            SEARCH.movieList = [...ev.target.result]
+            console.log(SEARCH.movieList)
                 MEDIA.buildCards(SEARCH.movieList)
             } else {
                 //fetch the url
                 let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
-                SEARCH.fetch(url)
+                SEARCH.fetch(url, 'searchStore')
             }
         }
     },
-    fetch : (url) => {
+    fetch : (url, type) => {
         fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
@@ -86,11 +90,15 @@ const SEARCH = {
             .then(data => {
                 console.log('fetching')
                 SEARCH.movieList = data.results
-                if (url.includes('similar')) {
-                    IDB.addMoviesToSimilarDB();
-                } else {
-                    IDB.addMoviesToSearchDB();
+                switch (type) {
+                    case 'searchStore': 
+                        IDB.addMoviesToSearchDB();
+                        break;
+                    case 'similarStore':
+                        IDB.addMoviesToSimilarDB();
+                        break;
                 }
+                console.log(type)
                 MEDIA.buildCards(data.results)
         })
             .catch(err => {
@@ -100,29 +108,28 @@ const SEARCH = {
     
     handleSimilar:(ev) => {
         let id = ev.currentTarget.id
+        SEARCH.movieName = ev.currentTarget.querySelector('.card-title').textContent
+        if (document.querySelector('.similarResults')) {
         let p = document.createElement('p')
         p.classList.add('h1', 'text-center')
-        p.textContent = `Similar movies to: ${ev.currentTarget.querySelector('.card-title').textContent}`
+        p.textContent = `Similar movies to: ${SEARCH.movieName}`
         document.querySelector('.similarResults').prepend(p)
-
-        // let tx = IDB.DB.transaction('similarStore', 'readwrite');
-        // let similarStore = tx.objectStore('similarStore');
-        // let getRequest = similarStore.getAll()
-        // getRequest.onsuccess = (ev) => {
-        //     ev.target.result.forEach(movie => {
-        //         if (movie.original_title.toLowerCase().includes(searchInput.toLowerCase())) {
-        //             console.log('found match')
-        //             SEARCH.movieList.push(movie)
-        //         }
-        //     })
-        //     if (SEARCH.movieList.length != 0) {
-        //         MEDIA.buildCards(SEARCH.movieList)
-        //     } else {
-        //         //fetch the url
-        //         let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
-        //         SEARCH.fetch(url)
-        //     }
-        // }
+}
+        let tx = IDB.DB.transaction('similarStore', 'readwrite');
+        let similarStore = tx.objectStore('similarStore');
+        let getRequest = similarStore.get(SEARCH.movieName)
+        getRequest.onerror = (err) => {console.log('something went wrong')}
+        getRequest.onsuccess = (ev) => {
+            if (ev.target.result != undefined) {
+                SEARCH.movieList = [...ev.target.result]
+                console.log(SEARCH.movieList)
+                MEDIA.buildCards(SEARCH.movieList)
+                } else {
+                    //fetch the url
+                    let url = `${SEARCH.baseUrl}movie/${id}/similar?api_key=${SEARCH.api}`;
+                    SEARCH.fetch(url, 'similarStore')
+                }
+        }
     }
 }
 
@@ -139,12 +146,8 @@ const IDB = {
             } catch (err) {
                 console.log('error deleting old DB');
             }
-            let options = {
-                keyPath: 'id',
-                autoIncrement: false,
-            };
-            IDB.DB.createObjectStore('searchStore', options);
-            IDB.DB.createObjectStore('similarStore', options);
+            IDB.DB.createObjectStore('searchStore');
+            IDB.DB.createObjectStore('similarStore');
         }
             dbOpenRequest.onerror = function (err) {
             console.warn(err.message)
@@ -155,28 +158,27 @@ const IDB = {
         }
     },
     addMoviesToSearchDB: () => {
+        console.log('addMoviesToSearchDB')
         let tx = IDB.DB.transaction('searchStore', 'readwrite');
         let searchStore = tx.objectStore('searchStore');
-        SEARCH.movieList.forEach(movie => {
-            let addRequest = searchStore.add(movie); 
+        let addRequest = searchStore.add(SEARCH.movieList, SEARCH.input); 
             addRequest.onsuccess = (ev) => {
+                // let url = new URL('./result.html', location.origin)
+                // location.href = url
             }
-        })
     },
     addMoviesToSimilarDB: () => {
         let tx = IDB.DB.transaction('similarStore', 'readwrite');
         let similarStore = tx.objectStore('similarStore');
-        SEARCH.movieList.forEach(movie => {
-            let addRequest = similarStore.add(movie); 
+            let addRequest = similarStore.add(SEARCH.movieList, SEARCH.movieName); 
             addRequest.onsuccess = (ev) => {
             }
-        })
     }
 }
 
 const MEDIA = {
     buildCards: (data) => {
-        document.querySelector('.display-area').innerHTML = ''
+        if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''
         data.forEach(movie => {
             let li = document.createElement('li');
             let source =  `${APP.imageUrl}w154${movie.poster_path}`
@@ -198,7 +200,7 @@ const MEDIA = {
         })
         document.querySelectorAll('div.card').forEach (btn => {
             btn.addEventListener('click', SEARCH.handleSimilar)
-        })
+        })}
     }
 }
 document.addEventListener('DOMContentLoaded', APP.init);
