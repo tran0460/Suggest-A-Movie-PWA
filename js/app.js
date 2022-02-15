@@ -46,15 +46,36 @@ const SEARCH = {
         SEARCH.handleResult();
     },
     handleResult: () => {
+        SEARCH.movieList = [];
         // displays the text "Search result for"
+        if (document.querySelector('p.text-center')) {
+            document.querySelector('p.text-center').textContent = ''
+        }
         let searchInput = document.querySelector('input').value
+        if (location.pathname.includes('result')){
         let p = document.createElement('p')
         p.classList.add('h1', 'text-center')
         p.textContent = `Search results for: ${searchInput}`
         document.querySelector('.searchResults').prepend(p)
-        //fetch the url
-        let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
-        SEARCH.fetch(url)
+        }
+        let tx = IDB.DB.transaction('searchStore', 'readwrite');
+        let searchStore = tx.objectStore('searchStore');
+        let getRequest = searchStore.getAll()
+        getRequest.onsuccess = (ev) => {
+            ev.target.result.forEach(movie => {
+                if (movie.original_title.toLowerCase().includes(searchInput.toLowerCase())) {
+                    console.log('found match')
+                    SEARCH.movieList.push(movie)
+                }
+            })
+            if (SEARCH.movieList.length != 0) {
+                MEDIA.buildCards(SEARCH.movieList)
+            } else {
+                //fetch the url
+                let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
+                SEARCH.fetch(url)
+            }
+        }
     },
     fetch : (url) => {
         fetch(url)
@@ -63,6 +84,7 @@ const SEARCH = {
                 return response.json()
         })
             .then(data => {
+                console.log('fetching')
                 SEARCH.movieList = data.results
                 if (url.includes('similar')) {
                     IDB.addMoviesToSimilarDB();
@@ -82,8 +104,25 @@ const SEARCH = {
         p.classList.add('h1', 'text-center')
         p.textContent = `Similar movies to: ${ev.currentTarget.querySelector('.card-title').textContent}`
         document.querySelector('.similarResults').prepend(p)
-        let url = `${SEARCH.baseUrl}/movie/${id}/similar?api_key=${SEARCH.api}`
-        SEARCH.fetch(url)
+
+        // let tx = IDB.DB.transaction('similarStore', 'readwrite');
+        // let similarStore = tx.objectStore('similarStore');
+        // let getRequest = similarStore.getAll()
+        // getRequest.onsuccess = (ev) => {
+        //     ev.target.result.forEach(movie => {
+        //         if (movie.original_title.toLowerCase().includes(searchInput.toLowerCase())) {
+        //             console.log('found match')
+        //             SEARCH.movieList.push(movie)
+        //         }
+        //     })
+        //     if (SEARCH.movieList.length != 0) {
+        //         MEDIA.buildCards(SEARCH.movieList)
+        //     } else {
+        //         //fetch the url
+        //         let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
+        //         SEARCH.fetch(url)
+        //     }
+        // }
     }
 }
 
@@ -118,7 +157,6 @@ const IDB = {
     addMoviesToSearchDB: () => {
         let tx = IDB.DB.transaction('searchStore', 'readwrite');
         let searchStore = tx.objectStore('searchStore');
-        console.log('preparing to add movies to search store');
         SEARCH.movieList.forEach(movie => {
             let addRequest = searchStore.add(movie); 
             addRequest.onsuccess = (ev) => {
@@ -128,7 +166,6 @@ const IDB = {
     addMoviesToSimilarDB: () => {
         let tx = IDB.DB.transaction('similarStore', 'readwrite');
         let similarStore = tx.objectStore('similarStore');
-        console.log('preparing to add movies to similarStore')
         SEARCH.movieList.forEach(movie => {
             let addRequest = similarStore.add(movie); 
             addRequest.onsuccess = (ev) => {
