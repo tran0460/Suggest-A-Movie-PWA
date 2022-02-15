@@ -45,7 +45,7 @@ const SEARCH = {
     api: 'f8950444a4c0c67cbff1553083941ae3',
     movieList: [],
     input: null,
-    movieName: null,
+    movieId: null,
     navigate: (ev) => {
         ev.preventDefault();
         if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''};
@@ -70,9 +70,8 @@ const SEARCH = {
         let searchStore = tx.objectStore('searchStore');
         let getData = searchStore.get(SEARCH.input.toLowerCase())
         getData.onsuccess = (ev) => {
-            if (ev.target.result != undefined) {
-            SEARCH.movieList = [...ev.target.result]
-            console.log(SEARCH.movieList)
+            if (ev.target.result.results != undefined) {
+            SEARCH.movieList = [...ev.target.result.results]
                 MEDIA.buildCards(SEARCH.movieList)
             } else {
                 //fetch the url
@@ -108,7 +107,7 @@ const SEARCH = {
     
     handleSimilar:(ev) => {
         let id = ev.currentTarget.id
-        SEARCH.movieName = ev.currentTarget.querySelector('.card-title').textContent
+        SEARCH.movieId = id
         if (document.querySelector('.similarResults')) {
         let p = document.createElement('p')
         p.classList.add('h1', 'text-center')
@@ -117,7 +116,7 @@ const SEARCH = {
 }
         let tx = IDB.DB.transaction('similarStore', 'readwrite');
         let similarStore = tx.objectStore('similarStore');
-        let getRequest = similarStore.get(SEARCH.movieName)
+        let getRequest = similarStore.get(SEARCH.movieId)
         getRequest.onerror = (err) => {console.log('something went wrong')}
         getRequest.onsuccess = (ev) => {
             if (ev.target.result != undefined) {
@@ -161,7 +160,11 @@ const IDB = {
         console.log('addMoviesToSearchDB')
         let tx = IDB.DB.transaction('searchStore', 'readwrite');
         let searchStore = tx.objectStore('searchStore');
-        let addRequest = searchStore.add(SEARCH.movieList, SEARCH.input); 
+        let obj = {
+            keyword: SEARCH.input,
+            results: SEARCH.movieList
+        };
+        let addRequest = searchStore.add(obj, SEARCH.input); 
             addRequest.onsuccess = (ev) => {
                 // let url = new URL('./result.html', location.origin)
                 // location.href = url
@@ -170,7 +173,11 @@ const IDB = {
     addMoviesToSimilarDB: () => {
         let tx = IDB.DB.transaction('similarStore', 'readwrite');
         let similarStore = tx.objectStore('similarStore');
-            let addRequest = similarStore.add(SEARCH.movieList, SEARCH.movieName); 
+        let obj = {
+            movieId: SEARCH.movieId,
+            results: SEARCH.movieList
+        };
+            let addRequest = similarStore.add(obj, SEARCH.movieId); 
             addRequest.onsuccess = (ev) => {
             }
     }
