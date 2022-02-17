@@ -1,4 +1,6 @@
 const APP = {
+    sw: null,
+    isOnline: 'onLine' in navigator && navigator.onLine,
     imageUrl: null,
     configData: null,
     init: () => {
@@ -28,12 +30,36 @@ const APP = {
     addListeners: () => {
         document.querySelector('.searchBtn').addEventListener('click', SEARCH.handleSearch)
         window.addEventListener('popstate', APP.checkPage)
+        navigator.serviceWorker.addEventListener('message', APP.gotMessage);
+
+        window.addEventListener('online', APP.changeStatus);
+        window.addEventListener('offline', APP.changeStatus);
+    },
+    gotMessage: (ev) => {
+        //received message from service worker
+        console.log(ev.data);
+    },
+    sendMessage: (msg) => {
+        //send messages to the service worker
+        navigator.serviceWorker.ready.then((registration) => {
+            registration.active.postMessage(msg);
+        });
+    },
+    changeStatus: (ev) => {
+        console.log(APP.isOnline)
+    APP.isOnline = ev.type === 'online' ? true : false;
+    navigator.serviceWorker.ready.then(registration => {
+    registration.active.postMessage({ONLINE: APP.isOnline, NAME: 'son' });
+        })
     },
     registerSW: () => {
-    navigator.serviceWorker.register('/js/sw.js').catch(function (err) {
+    navigator.serviceWorker.register('/sw.js').catch(function (err) {
         console.warn(err);
     });
     navigator.serviceWorker.ready.then((registration) => {
+        console.log('activated sw')
+        APP.sw = registration.active;
+
         });
     },
     checkPage: () => {
@@ -139,11 +165,10 @@ const IDB = {
             keyword: SEARCH.input,
             results: obj
         };
-        console.log(formatData);
-        let addRequest = searchStore.add(formatData, SEARCH.input); 
-        addRequest.onsuccess = () => {
-        console.log('added ',SEARCH.input)
-                }
+            let addRequest = searchStore.add(formatData, SEARCH.input); 
+            addRequest.onsuccess = () => {
+            console.log('added ',SEARCH.input)
+            }
         }
         else {
             let formatData = {
@@ -154,7 +179,7 @@ const IDB = {
             let addRequest = searchStore.add(formatData, SEARCH.movieId); 
             addRequest.onsuccess = () => {
             console.log('added ',SEARCH.movieId)
-                    }
+            }
         }
     },
     checkDb: (storeName, keyValue) => {

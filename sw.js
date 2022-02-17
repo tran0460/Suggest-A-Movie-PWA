@@ -1,4 +1,5 @@
-const version = 1;
+const version = 2;
+let isOnline = true;
 const staticCache = `PWAStaticCacheVersion${version}`
 const dynamicCache = `PWADynamicCacheVersion${version}`
 const cacheList = [
@@ -53,17 +54,14 @@ self.addEventListener('activate', (ev) => {
     );
 });
 self.addEventListener('fetch', (ev) => {
-    console.log('SW detected fetch')
     ev.respondWith(
     caches.match(ev.request).then((cacheRes) => {
         return (
             cacheRes ||
             fetch(ev.request)
             .then((fetchRes) => {
-              //TODO: check here for the 404 error
                 if (! fetchRes.ok) throw new Error(fetchRes.statusText)
                 return caches.open(dynamicCache).then((cache) => {
-                    console.log('yoohoo')
                   let copy = fetchRes.clone(); //make a copy of the response
                   cache.put(ev.request, copy); //put the copy into the cache
                 return fetchRes; //send the original response back up the chain
@@ -79,19 +77,24 @@ self.addEventListener('fetch', (ev) => {
             }
             })
         );
-    })
-    );
+        })
+    ); //what do we want to send to the browser?
 });
-self.addEventListener('message', (ev)=>{
-    //check ev.data to get the message
+self.addEventListener('message', (ev) => {
+    console.log(ev.data);
+    if (ev.data.ONLINE) {
+        isOnline = ev.data.ONLINE;
+        console.log(isOnline);
+    }
+
 });
-
-function sendMessage(msg){
-    //send a message to the browser from the service worker
-};
-
-function limitCache(){
-    //remove some files from the dynamic cache
+function sendMessage(msg) {
+    self.clients.matchAll().then(function (clients) {
+        if (clients && clients.length) {
+        //Respond to last focused tab
+        clients[0].postMessage(msg);
+        }
+    });
 }
 
 function checkForConnection(){
