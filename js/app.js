@@ -27,6 +27,7 @@ const APP = {
     },
     addListeners: () => {
         document.querySelector('.searchBtn').addEventListener('click', SEARCH.handleSearch)
+        window.addEventListener('popstate', APP.checkPage)
     },
     registerSW: () => {
     navigator.serviceWorker.register('/js/sw.js').catch(function (err) {
@@ -36,6 +37,7 @@ const APP = {
         });
     },
     checkPage: () => {
+        console.log('Checking')
         let query = location.href.split('#')[1]
         switch (document.body.id) {
             case 'home':
