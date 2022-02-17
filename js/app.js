@@ -5,15 +5,15 @@ const APP = {
         APP.registerSW();
         APP.addListeners();
         APP.getConfig();
-        IDB.initDB();
-        APP.checkURL();
+        IDB.initDB(APP.checkPage)
+        
     },
     getConfig: () => {
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
         fetch(url) 
             .then(response => {
             if (response.ok) {
-                return response.json()
+                return response.json() 
             } else {
             throw new Error(`something went wrong : ${response.status}`)
             }
@@ -35,13 +35,21 @@ const APP = {
     navigator.serviceWorker.ready.then((registration) => {
         });
     },
-    checkURL: () => {
-        // if (location.pathname.includes('result')){
-        // let p = document.createElement('p')
-        // p.classList.add('h1', 'text-center')
-        // p.textContent = `Search results for: ${searchInput}`
-        // document.querySelector('.searchResults').prepend(p)
-        // }
+    checkPage: () => {
+        let query = location.href.split('#')[1]
+        switch (document.body.id) {
+            case 'home':
+                break;
+            case 'result':
+                IDB.checkDb('searchStore', query)
+                break;
+            case 'suggestions':
+                let id = query.split('/')[1]
+                IDB.checkDb('similarStore', id)
+                break;
+            case 'error':
+                break;
+        }
     }
 }
 const SEARCH = {
@@ -58,10 +66,18 @@ const SEARCH = {
                 return response.json()
         })
             .then(data => {
-                console.log('fetching for ',type)
                 SEARCH.movieList = data.results
                 IDB.addResultsToDB(data.results, type);
-                IDB.getDBResults(type, SEARCH.input)
+                if (type === 'searchStore') {
+                    location.href = `${location.origin}/result.html#${SEARCH.input}`
+                    IDB.getDBResults(type, SEARCH.input)
+                }
+                if (type === 'similarStore') {
+                    let currentLocation = location.href
+                    location.href = `${currentLocation.replace('result.html', 'suggestions.html')}/${SEARCH.movieId}`
+                    console.log('changed location')
+                    IDB.getDBResults(type, SEARCH.movieId)
+                }
         })
             .catch(err => {
                 console.warn(err.message)
@@ -69,32 +85,31 @@ const SEARCH = {
     },
     handleSearch: (ev) => {
         ev.preventDefault()
-        console.log(ev.target.id)
         //check what button is clicked
             if (ev.currentTarget.id === 'get-result') {
                 let searchInput = document.querySelector('input').value
                 SEARCH.input = searchInput;
-                IDB.getDBResults('searchStore', searchInput)
+                IDB.checkDb('searchStore', searchInput)
             }
                 else {
                 let id = parseInt(ev.currentTarget.id)
                 SEARCH.movieId = id
                 console.log(id)
-                IDB.getDBResults('similarStore', id)
+                IDB.checkDb('similarStore', id)
             }
     },
 }
 
 const IDB = {
     DB: null,
-    initDB: () => {
+    initDB: (cb) => {
         let version = 1
         let dbOpenRequest = indexedDB.open('SuggestAMovieDB', version);
             dbOpenRequest.onupgradeneeded = function (ev) {
             IDB.DB = ev.target.result; 
             try {
-                DB.deleteObjectStore('searchStore');
-                DB.deleteObjectStore('similarStore');
+                IDB.DB.deleteObjectStore('similarStore');
+                IDB.DB.deleteObjectStore('searchStore');
             } catch (err) {
                 console.log('error deleting old DB');
             }
@@ -107,6 +122,7 @@ const IDB = {
             dbOpenRequest.onsuccess = function (ev) {
             IDB.DB = dbOpenRequest.result
             console.log(IDB.DB.name, `ready to be used.`);
+            cb()
         }
     },
     createTransaction: (storeName)=>{
@@ -116,21 +132,43 @@ const IDB = {
     addResultsToDB: (obj, storeName)=>{
         let tx = IDB.DB.transaction(storeName, 'readwrite');
         let searchStore = tx.objectStore(storeName);
+        if (storeName === 'searchStore' ){
         let formatData = {
             keyword: SEARCH.input,
             results: obj
         };
+        console.log(formatData);
         let addRequest = searchStore.add(formatData, SEARCH.input); 
-        addRequest.on
+        addRequest.onsuccess = () => {
+        console.log('added ',SEARCH.input)
+                }
+        }
+        else {
+            let formatData = {
+                keyword: SEARCH.movieId,
+                results: obj
+            };
+            console.log(formatData);
+            let addRequest = searchStore.add(formatData, SEARCH.movieId); 
+            addRequest.onsuccess = () => {
+            console.log('added ',SEARCH.movieId)
+                    }
+        }
     },
-    getDBResults: (storeName, keyValue) => {
-        let getFromStore= IDB.createTransaction(storeName).objectStore(storeName)
+    checkDb: (storeName, keyValue) => {
+        let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
         let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
             if (ev.target.result != undefined) {
-                console.log(ev.target.result)
-                SEARCH.movieList = [...ev.target.result.results]
-                MEDIA.buildCards(SEARCH.movieList)
+                if (SEARCH.input != null) {
+                    if (storeName === 'searchStore') {
+                        location.href = `${location.origin}/result.html#${SEARCH.input}`
+                    }
+                    if (storeName === 'similarStore') {
+                        location.href = `${location.origin}/suggestions.html#${SEARCH.input}/${keyValue}`
+                    }
+                }
+                IDB.getDBResults(storeName, keyValue)
                 } else {
                     //fetch the url
                     if (typeof keyValue === 'string') {
@@ -142,6 +180,14 @@ const IDB = {
                         SEARCH.fetch(url, storeName)
                     }
                 }
+            }
+    },
+    getDBResults: (storeName, keyValue) => {
+        let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
+        let getRequest = getFromStore.get(keyValue);
+        getRequest.onsuccess = (ev) => {
+                SEARCH.movieList = [...ev.target.result.results]
+                MEDIA.buildCards(SEARCH.movieList)
             }
         }
 }
