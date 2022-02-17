@@ -7,7 +7,6 @@ const APP = {
         APP.getConfig();
         IDB.initDB();
         APP.checkURL();
-        // console.log('init')
     },
     getConfig: () => {
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
@@ -27,7 +26,7 @@ const APP = {
             alert(`Theres been an ERROR!!!!!!!! ${error.name}, ${error.message}`))
     },
     addListeners: () => {
-        document.querySelector('.searchBtn').addEventListener('click', SEARCH.navigate)
+        document.querySelector('.searchBtn').addEventListener('click', SEARCH.handleSearch)
     },
     registerSW: () => {
     navigator.serviceWorker.register('/js/sw.js').catch(function (err) {
@@ -37,7 +36,12 @@ const APP = {
         });
     },
     checkURL: () => {
-
+        // if (location.pathname.includes('result')){
+        // let p = document.createElement('p')
+        // p.classList.add('h1', 'text-center')
+        // p.textContent = `Search results for: ${searchInput}`
+        // document.querySelector('.searchResults').prepend(p)
+        // }
     }
 }
 const SEARCH = {
@@ -46,90 +50,45 @@ const SEARCH = {
     movieList: [],
     input: null,
     movieId: null,
-    navigate: (ev) => {
-        ev.preventDefault();
-        if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''};
-        SEARCH.movieList = [];
-        // location.pathname = 'result.html'
-        SEARCH.handleResult();
-    },
-    handleResult: () => {
-        // displays the text "Search result for"
-        if (document.querySelector('p.text-center')) {
-            document.querySelector('p.text-center').textContent = ''
-        }
-        let searchInput = document.querySelector('input').value
-        SEARCH.input = searchInput;
-        if (location.pathname.includes('result')){
-        let p = document.createElement('p')
-        p.classList.add('h1', 'text-center')
-        p.textContent = `Search results for: ${searchInput}`
-        document.querySelector('.searchResults').prepend(p)
-        }
-        let tx = IDB.DB.transaction('searchStore', 'readwrite');
-        let searchStore = tx.objectStore('searchStore');
-        let getData = searchStore.get(SEARCH.input.toLowerCase())
-        getData.onsuccess = (ev) => {
-            if (ev.target.result.results != undefined) {
-            SEARCH.movieList = [...ev.target.result.results]
-                MEDIA.buildCards(SEARCH.movieList)
-            } else {
-                //fetch the url
-                let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${searchInput}`;
-                SEARCH.fetch(url, 'searchStore')
-            }
-        }
-    },
+    // navigate: (ev) => {
+    //     ev.preventDefault();
+    //     if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''};
+    //     SEARCH.movieList = [];
+    //     SEARCH.handleSearch()
+    // },
     fetch : (url, type) => {
+        console.log(url)
         fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
                 return response.json()
         })
             .then(data => {
-                console.log('fetching')
+                console.log('fetching for ',type)
                 SEARCH.movieList = data.results
-                switch (type) {
-                    case 'searchStore': 
-                        IDB.addMoviesToSearchDB();
-                        break;
-                    case 'similarStore':
-                        IDB.addMoviesToSimilarDB();
-                        break;
-                }
-                console.log(type)
+                IDB.addResultsToDB(data.results, type);
                 MEDIA.buildCards(data.results)
         })
             .catch(err => {
                 console.warn(err.message)
         })
     },
-    
-    handleSimilar:(ev) => {
-        let id = ev.currentTarget.id
-        SEARCH.movieId = id
-        if (document.querySelector('.similarResults')) {
-        let p = document.createElement('p')
-        p.classList.add('h1', 'text-center')
-        p.textContent = `Similar movies to: ${SEARCH.movieName}`
-        document.querySelector('.similarResults').prepend(p)
-}
-        let tx = IDB.DB.transaction('similarStore', 'readwrite');
-        let similarStore = tx.objectStore('similarStore');
-        let getRequest = similarStore.get(SEARCH.movieId)
-        getRequest.onerror = (err) => {console.log('something went wrong')}
-        getRequest.onsuccess = (ev) => {
-            if (ev.target.result != undefined) {
-                SEARCH.movieList = [...ev.target.result]
-                console.log(SEARCH.movieList)
-                MEDIA.buildCards(SEARCH.movieList)
-                } else {
-                    //fetch the url
-                    let url = `${SEARCH.baseUrl}movie/${id}/similar?api_key=${SEARCH.api}`;
-                    SEARCH.fetch(url, 'similarStore')
-                }
-        }
-    }
+    handleSearch: (ev) => {
+        ev.preventDefault()
+        console.log(ev.target.id)
+        // displays the text "Search result for"
+            if (ev.currentTarget.id === 'get-result') {
+                let searchInput = document.querySelector('input').value
+                SEARCH.input = searchInput;
+                IDB.getDBResults('searchStore', searchInput)
+            }
+                else {
+                let id = parseInt(ev.currentTarget.id)
+                SEARCH.movieId = id
+                console.log(id)
+                IDB.getDBResults('similarStore', id)
+            }
+    },
 }
 
 const IDB = {
@@ -156,35 +115,45 @@ const IDB = {
             console.log(IDB.DB.name, `ready to be used.`);
         }
     },
-    addMoviesToSearchDB: () => {
-        console.log('addMoviesToSearchDB')
-        let tx = IDB.DB.transaction('searchStore', 'readwrite');
-        let searchStore = tx.objectStore('searchStore');
-        let obj = {
-            keyword: SEARCH.input,
-            results: SEARCH.movieList
-        };
-        let addRequest = searchStore.add(obj, SEARCH.input); 
-            addRequest.onsuccess = (ev) => {
-                // let url = new URL('./result.html', location.origin)
-                // location.href = url
-            }
+    createTransaction: (storeName)=>{
+        let tx = IDB.DB.transaction(storeName, 'readwrite');        //create a transaction to use for some interaction with the database
+        return tx;
     },
-    addMoviesToSimilarDB: () => {
-        let tx = IDB.DB.transaction('similarStore', 'readwrite');
-        let similarStore = tx.objectStore('similarStore');
-        let obj = {
-            movieId: SEARCH.movieId,
-            results: SEARCH.movieList
+    addResultsToDB: (obj, storeName)=>{
+        let tx = IDB.DB.transaction(storeName, 'readwrite');
+        let searchStore = tx.objectStore(storeName);
+        let formatData = {
+            keyword: SEARCH.input,
+            results: obj
         };
-            let addRequest = similarStore.add(obj, SEARCH.movieId); 
-            addRequest.onsuccess = (ev) => {
+        let addRequest = searchStore.add(formatData, SEARCH.input); 
+        addRequest.on
+    },
+    getDBResults: (storeName, keyValue) => {
+        let getFromStore= IDB.createTransaction(storeName).objectStore(storeName)
+        let getRequest = getFromStore.get(keyValue);
+        getRequest.onsuccess = (ev) => {
+            if (ev.target.result != undefined) {
+                console.log(ev.target.result)
+                SEARCH.movieList = [...ev.target.result.results]
+                MEDIA.buildCards(SEARCH.movieList)
+                } else {
+                    //fetch the url
+                    if (typeof keyValue === 'string') {
+                        let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${keyValue}`;
+                        SEARCH.fetch(url, storeName)
+                    } 
+                    if (typeof keyValue === 'number') {
+                        let url = `${SEARCH.baseUrl}movie/${keyValue};/similar?api_key=${SEARCH.api}`;
+                        SEARCH.fetch(url, storeName)
+                    }
+                }
             }
-    }
+        }
 }
-
 const MEDIA = {
     buildCards: (data) => {
+        console.log('building cards', data);
         if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''
         data.forEach(movie => {
             let li = document.createElement('li');
@@ -194,7 +163,7 @@ const MEDIA = {
             }
             li.innerHTML = 
             `
-            <div class="card m-2 pe-none" id="${movie.id}"style="width: 18rem;">
+            <div class="card m-2 pe-none" id=${movie.id} style="width: 18rem;">
                 <img class="card-img-top" src="${source}" alt="Card image cap">
                 <div class="card-body">
                 <h5 class="card-title">${movie.original_title}</h5>
@@ -206,7 +175,7 @@ const MEDIA = {
             document.querySelector('.display-area').append(li)
         })
         document.querySelectorAll('div.card').forEach (btn => {
-            btn.addEventListener('click', SEARCH.handleSimilar)
+            btn.addEventListener('click', SEARCH.handleSearch)
         })}
     }
 }
