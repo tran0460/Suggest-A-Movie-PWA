@@ -50,12 +50,6 @@ const SEARCH = {
     movieList: [],
     input: null,
     movieId: null,
-    // navigate: (ev) => {
-    //     ev.preventDefault();
-    //     if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''};
-    //     SEARCH.movieList = [];
-    //     SEARCH.handleSearch()
-    // },
     fetch : (url, type) => {
         console.log(url)
         fetch(url)
@@ -67,7 +61,7 @@ const SEARCH = {
                 console.log('fetching for ',type)
                 SEARCH.movieList = data.results
                 IDB.addResultsToDB(data.results, type);
-                MEDIA.buildCards(data.results)
+                IDB.getDBResults(type, SEARCH.input)
         })
             .catch(err => {
                 console.warn(err.message)
@@ -76,7 +70,7 @@ const SEARCH = {
     handleSearch: (ev) => {
         ev.preventDefault()
         console.log(ev.target.id)
-        // displays the text "Search result for"
+        //check what button is clicked
             if (ev.currentTarget.id === 'get-result') {
                 let searchInput = document.querySelector('input').value
                 SEARCH.input = searchInput;
