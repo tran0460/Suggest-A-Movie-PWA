@@ -44,8 +44,8 @@ const APP = {
                 IDB.checkDb('searchStore', query)
                 break;
             case 'suggestions':
-                let id = query.split('/')[1]
-                IDB.checkDb('similarStore', id)
+                console.log(typeof query)
+                IDB.checkDb('similarStore', parseInt(query))
                 break;
             case 'error':
                 break;
@@ -74,7 +74,7 @@ const SEARCH = {
                 }
                 if (type === 'similarStore') {
                     let currentLocation = location.href
-                    location.href = `${currentLocation.replace('result.html', 'suggestions.html')}/${SEARCH.movieId}`
+                    location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
                     console.log('changed location')
                     IDB.getDBResults(type, SEARCH.movieId)
                 }
@@ -165,7 +165,7 @@ const IDB = {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
                     if (storeName === 'similarStore') {
-                        location.href = `${location.origin}/suggestions.html#${SEARCH.input}/${keyValue}`
+                        location.href = `${location.origin}/suggestions.html#${keyValue}`
                     }
                 }
                 IDB.getDBResults(storeName, keyValue)
