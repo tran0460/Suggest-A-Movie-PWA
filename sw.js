@@ -9,7 +9,7 @@ const cacheList = [
     '/result.html',
     '/suggestions.html',
     '/js/app.js',
-    '/js/sw.js',
+    '/sw.js',
     '/css/main.css',
     '/img/crying-face.png',
     '/img/placeholder.png',
@@ -28,7 +28,9 @@ const limitCacheSize = (nm, size = 25) => {
 };
 self.addEventListener('install', (ev) => {
     ev.waitUntil(
-        caches.open(staticCache).then((cache) => {
+        caches.open(staticCache)
+        .then((cache) => {
+            console.log(cache)
             cache.addAll(cacheList);
         })
     )
@@ -55,36 +57,31 @@ self.addEventListener('activate', (ev) => {
 });
 self.addEventListener('fetch', (ev) => {
     ev.respondWith(
-    caches.match(ev.request).then((cacheRes) => {
-        return (
-            cacheRes ||
-            fetch(ev.request)
-            .then((fetchRes) => {
-                if (! fetchRes.ok) throw new Error(fetchRes.statusText)
+        fetch(ev.request, { mode: 'cors', credentials: 'omit' })
+            .then((response) => {
+                if (!response.ok) throw new Error(response.statusText)
+                if (response.status === 200)
+                console.log('fetch success')
                 return caches.open(dynamicCache).then((cache) => {
-                  let copy = fetchRes.clone(); //make a copy of the response
-                  cache.put(ev.request, copy); //put the copy into the cache
-                return fetchRes; //send the original response back up the chain
-                });
-            })
-            .catch((err) => {
-                console.log('SW fetch failed');
-                console.warn(err);
-                if(ev.request.mode === 'navigate') {
-                return caches.match('/404.html').then(cacheRes => {
-                return cacheRes
+                    let copy = response.clone()
+                    cache.put(ev.request, copy)
+                console.log(ev.request.mode)
+                console.log(ev.request.credentials)
+                    return response
+                    })
                 })
-            }
+            .catch(error => {
+                console.log('SW fetch failed')
+                console.log(ev.request)
+                console.log(ev.request.mode)
             })
-        );
-        })
-    ); //what do we want to send to the browser?
+    )
 });
+
 self.addEventListener('message', (ev) => {
     console.log(ev.data);
     if (ev.data.ONLINE) {
         isOnline = ev.data.ONLINE;
-        console.log(isOnline);
     }
 
 });

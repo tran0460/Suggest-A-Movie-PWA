@@ -10,7 +10,13 @@ const APP = {
         IDB.initDB(APP.checkPage)
         
     },
+    checkStatus: () => {
+        if (APP.isOnline === false) {
+            location.pathname = '/404.html'
+        }
+    },
     getConfig: () => {
+        APP.checkStatus();
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
         fetch(url) 
             .then(response => {
@@ -46,7 +52,6 @@ const APP = {
         });
     },
     changeStatus: (ev) => {
-        console.log(APP.isOnline)
     APP.isOnline = ev.type === 'online' ? true : false;
     navigator.serviceWorker.ready.then(registration => {
     registration.active.postMessage({ONLINE: APP.isOnline, NAME: 'son' });
@@ -57,13 +62,11 @@ const APP = {
         console.warn(err);
     });
     navigator.serviceWorker.ready.then((registration) => {
-        console.log('activated sw')
         APP.sw = registration.active;
-
+        console.log('sw is registered')
         });
     },
     checkPage: () => {
-        console.log('Checking')
         let query = location.href.split('#')[1]
         switch (document.body.id) {
             case 'home':
@@ -72,7 +75,6 @@ const APP = {
                 IDB.checkDb('searchStore', query)
                 break;
             case 'suggestions':
-                console.log(typeof query)
                 IDB.checkDb('similarStore', parseInt(query))
                 break;
             case 'error':
@@ -87,7 +89,7 @@ const SEARCH = {
     input: null,
     movieId: null,
     fetch : (url, type) => {
-        console.log(url)
+        APP.checkStatus();
         fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
@@ -122,7 +124,6 @@ const SEARCH = {
                 else {
                 let id = parseInt(ev.currentTarget.id)
                 SEARCH.movieId = id
-                console.log(id)
                 IDB.checkDb('similarStore', id)
             }
     },
@@ -167,7 +168,6 @@ const IDB = {
         };
             let addRequest = searchStore.add(formatData, SEARCH.input); 
             addRequest.onsuccess = () => {
-            console.log('added ',SEARCH.input)
             }
         }
         else {
@@ -175,10 +175,8 @@ const IDB = {
                 keyword: SEARCH.movieId,
                 results: obj
             };
-            console.log(formatData);
             let addRequest = searchStore.add(formatData, SEARCH.movieId); 
             addRequest.onsuccess = () => {
-            console.log('added ',SEARCH.movieId)
             }
         }
     },
@@ -220,7 +218,6 @@ const IDB = {
 }
 const MEDIA = {
     buildCards: (data) => {
-        console.log('building cards', data);
         if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''
         data.forEach(movie => {
             let li = document.createElement('li');
