@@ -15,12 +15,12 @@ const cacheList = [
     '/img/placeholder.png',
     '/img/tmdb-svg.svg'
 ]
-const limitCacheSize = (nm, size = 25) => {
+const limitCacheSize = (nm, size) => {
     caches.open(nm).then((cache) => {
         cache.keys().then((keys) => {
-        if (keys.length > size) {
-            cache.delete(keys[0]).then(() => {
-            limitCacheSize(nm, size);
+            if (keys.length > size) {
+                cache.delete(keys[0]).then(() => {
+                limitCacheSize(nm, size);
             });
         }
         });
@@ -55,47 +55,48 @@ self.addEventListener('activate', (ev) => {
         .catch(console.warn)
     );
 });
+
 self.addEventListener('fetch', (ev) => {
     ev.respondWith(
-        fetch(ev.request, { mode: 'cors', credentials: 'omit' })
-            .then((response) => {
-                if (!response.ok) throw new Error(response.statusText)
-                if (response.status === 200)
-                console.log('fetch success')
+    caches.match(ev.request).then((cacheRes) => {
+        return (
+            cacheRes ||
+        fetch(ev.request) 
+            .then((fetchRes) => {
+              //TODO: check here for the 404 error
                 return caches.open(dynamicCache).then((cache) => {
-                    let copy = response.clone()
-                    cache.put(ev.request, copy)
-                console.log(ev.request.mode)
-                console.log(ev.request.credentials)
-                    return response
-                    })
-                })
-            .catch(error => {
-                console.log('SW fetch failed')
-                console.log(ev.request)
-                console.log(ev.request.mode)
+                    let copy = fetchRes.clone(); //make a copy of the response
+                    cache.put(ev.request, copy); //put the copy into the cache
+                    limitCacheSize(dynamicCache, 30)
+                    return fetchRes; //send the original response back up the chain
+                });
             })
-    )
-});
-
-self.addEventListener('message', (ev) => {
-    console.log(ev.data);
-    if (ev.data.ONLINE) {
-        isOnline = ev.data.ONLINE;
-    }
-
-});
-function sendMessage(msg) {
-    self.clients.matchAll().then(function (clients) {
-        if (clients && clients.length) {
-        //Respond to last focused tab
-        clients[0].postMessage(msg);
+            .catch((err) => {
+                console.log('SW fetch failed');
+                console.warn(err);
+                console.log(ev.request.mode)
+                return caches.match('/404.html').then(cacheRes => {
+                    console.log(cacheRes)
+                    return cacheRes
+                })
+            })
+            );
+        })
+        ); //what do we want to send to the browser?
+    }); 
+    
+    self.addEventListener('message', (ev) => {
+        console.log(ev.data);
+        if (ev.data.ONLINE) {
+            isOnline = ev.data.ONLINE;
         }
+        
     });
-}
-
-function checkForConnection(){
-    //try to talk to a server and do a fetch() with HEAD method.
-    //to see if we are really online or offline
-    //send a message back to the browser
-}
+    function sendMessage(msg) {
+        self.clients.matchAll().then(function (clients) {
+            if (clients && clients.length) {
+                clients[0].postMessage(msg);
+            }
+        });
+    }
+    

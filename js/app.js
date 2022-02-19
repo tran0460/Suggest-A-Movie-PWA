@@ -10,13 +10,8 @@ const APP = {
         IDB.initDB(APP.checkPage)
         
     },
-    checkStatus: () => {
-        if (APP.isOnline === false) {
-            location.pathname = '/404.html'
-        }
-    },
+
     getConfig: () => {
-        APP.checkStatus();
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
         fetch(url) 
             .then(response => {
@@ -31,7 +26,8 @@ const APP = {
             APP.configData = data.images
         })
         .catch(error => 
-            alert(`Theres been an ERROR!!!!!!!! ${error.name}, ${error.message}`))
+            alert(`Theres been an ERROR!!!!!!!! ${error.name}, ${error.message}`)
+            )
     },
     addListeners: () => {
         document.querySelector('.searchBtn').addEventListener('click', SEARCH.handleSearch)
@@ -40,10 +36,6 @@ const APP = {
 
         window.addEventListener('online', APP.changeStatus);
         window.addEventListener('offline', APP.changeStatus);
-    },
-    gotMessage: (ev) => {
-        //received message from service worker
-        console.log(ev.data);
     },
     sendMessage: (msg) => {
         //send messages to the service worker
@@ -89,7 +81,6 @@ const SEARCH = {
     input: null,
     movieId: null,
     fetch : (url, type) => {
-        APP.checkStatus();
         fetch(url)
             .then(response => {
                 if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
@@ -105,7 +96,6 @@ const SEARCH = {
                 if (type === 'similarStore') {
                     let currentLocation = location.href
                     location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
-                    console.log('changed location')
                     IDB.getDBResults(type, SEARCH.movieId)
                 }
         })
