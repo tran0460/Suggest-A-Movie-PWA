@@ -13,7 +13,8 @@ const cacheList = [
     '/css/main.css',
     '/img/crying-face.png',
     '/img/placeholder.png',
-    '/img/tmdb-svg.svg'
+    '/img/tmdb-svg.svg',
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css'
 ]
 const limitCacheSize = (nm, size) => {
     caches.open(nm).then((cache) => {
@@ -61,9 +62,9 @@ self.addEventListener('fetch', (ev) => {
     caches.match(ev.request).then((cacheRes) => {
         return (
             cacheRes ||
-        fetch(ev.request) 
+            fetch(ev.request, { mode: 'cors', credentials: 'omit' }) 
             .then((fetchRes) => {
-              //TODO: check here for the 404 error
+                // if (!fetchRes.ok) throw new Error(fetchRes.statusText)
                 return caches.open(dynamicCache).then((cache) => {
                     let copy = fetchRes.clone(); //make a copy of the response
                     cache.put(ev.request, copy); //put the copy into the cache

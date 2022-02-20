@@ -8,9 +8,7 @@ const APP = {
         APP.addListeners();
         APP.getConfig();
         IDB.initDB(APP.checkPage)
-        
     },
-
     getConfig: () => {
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
         fetch(url) 
@@ -59,20 +57,22 @@ const APP = {
         });
     },
     checkPage: () => {
+        console.log('checkPage running')
         let query = location.href.split('#')[1]
         switch (document.body.id) {
             case 'home':
                 break;
             case 'result':
-                IDB.checkDb('searchStore', query)
+                document.getElementById('searchQuery').textContent = query
+                IDB.getDBResults('searchStore', query)
                 break;
             case 'suggestions':
-                IDB.checkDb('similarStore', parseInt(query))
+                IDB.getDBResults('similarStore', parseInt(query))
                 break;
             case 'error':
                 break;
         }
-    }
+    },
 }
 const SEARCH = {
     baseUrl : 'https://api.themoviedb.org/3/',
@@ -80,6 +80,7 @@ const SEARCH = {
     movieList: [],
     input: null,
     movieId: null,
+    movieName: null,
     fetch : (url, type) => {
         fetch(url)
             .then(response => {
@@ -87,16 +88,22 @@ const SEARCH = {
                 return response.json()
         })
             .then(data => {
-                SEARCH.movieList = data.results
-                IDB.addResultsToDB(data.results, type);
-                if (type === 'searchStore') {
-                    location.href = `${location.origin}/result.html#${SEARCH.input}`
-                    IDB.getDBResults(type, SEARCH.input)
-                }
-                if (type === 'similarStore') {
-                    let currentLocation = location.href
-                    location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
-                    IDB.getDBResults(type, SEARCH.movieId)
+                console.log(data.results)
+                if (data.results === null) {
+                    location.href = `${location.origin}/404.html`
+                    console.log('data not found')
+                } else {
+                    SEARCH.movieList = data.results
+                    IDB.addResultsToDB(data.results, type);
+                    if (type === 'searchStore') {
+                        location.href = `${location.origin}/result.html#${SEARCH.input}`
+                        // IDB.getDBResults(type, SEARCH.input)
+                    }
+                    if (type === 'similarStore') {
+                        let currentLocation = location.href
+                        location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
+                        // IDB.getDBResults(type, SEARCH.movieId)
+                    }
                 }
         })
             .catch(err => {
@@ -113,6 +120,7 @@ const SEARCH = {
             }
                 else {
                 let id = parseInt(ev.currentTarget.id)
+                SEARCH.movieName = ev.currentTarget.querySelector('.card-title').textContent
                 SEARCH.movieId = id
                 IDB.checkDb('similarStore', id)
             }
@@ -162,7 +170,8 @@ const IDB = {
         }
         else {
             let formatData = {
-                keyword: SEARCH.movieId,
+                movieid: SEARCH.movieId,
+                name: SEARCH.movieName,
                 results: obj
             };
             let addRequest = searchStore.add(formatData, SEARCH.movieId); 
@@ -171,6 +180,7 @@ const IDB = {
         }
     },
     checkDb: (storeName, keyValue) => {
+        console.log('checkDB running')
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
         let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
@@ -183,11 +193,10 @@ const IDB = {
                         location.href = `${location.origin}/suggestions.html#${keyValue}`
                     }
                 }
-                IDB.getDBResults(storeName, keyValue)
                 } else {
                     //fetch the url
                     if (typeof keyValue === 'string') {
-                        let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${keyValue}`;
+                        let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${keyValue.toLowerCase()}`;
                         SEARCH.fetch(url, storeName)
                     } 
                     if (typeof keyValue === 'number') {
@@ -198,10 +207,13 @@ const IDB = {
             }
     },
     getDBResults: (storeName, keyValue) => {
+        console.log('getDBResults running')
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
         let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
+            console.log(storeName + keyValue)
                 SEARCH.movieList = [...ev.target.result.results]
+                document.getElementById('searchQuery').textContent = ev.target.result.name
                 MEDIA.buildCards(SEARCH.movieList)
             }
         }
@@ -233,4 +245,4 @@ const MEDIA = {
         })}
     }
 }
-document.addEventListener('DOMContentLoaded', APP.init);
+APP.init();
