@@ -63,7 +63,6 @@ const APP = {
             case 'home':
                 break;
             case 'result':
-                document.getElementById('searchQuery').textContent = query
                 IDB.getDBResults('searchStore', query)
                 break;
             case 'suggestions':
@@ -97,12 +96,10 @@ const SEARCH = {
                     IDB.addResultsToDB(data.results, type);
                     if (type === 'searchStore') {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
-                        // IDB.getDBResults(type, SEARCH.input)
                     }
                     if (type === 'similarStore') {
                         let currentLocation = location.href
                         location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
-                        // IDB.getDBResults(type, SEARCH.movieId)
                     }
                 }
         })
@@ -211,9 +208,13 @@ const IDB = {
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
         let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
-            console.log(storeName + keyValue)
+            // console.log(storeName + keyValue)
                 SEARCH.movieList = [...ev.target.result.results]
-                document.getElementById('searchQuery').textContent = ev.target.result.name
+                if (storeName === 'searchStore') {
+                    document.getElementById('searchQuery').textContent = ev.target.result.keyword
+                } else {
+                    document.getElementById('searchQuery').textContent = ev.target.result.name
+                }
                 MEDIA.buildCards(SEARCH.movieList)
             }
         }
