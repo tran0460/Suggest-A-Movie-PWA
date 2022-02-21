@@ -4,10 +4,10 @@ const APP = {
     imageUrl: null,
     configData: null,
     init: () => {
+        APP.getConfig();
         APP.registerSW();
         APP.addListeners();
-        APP.getConfig();
-        IDB.initDB(APP.checkPage)
+        IDB.initDB(APP.checkPage);
     },
     getConfig: () => {
         const url = `https://api.themoviedb.org/3/configuration?api_key=f8950444a4c0c67cbff1553083941ae3`
@@ -81,19 +81,19 @@ const SEARCH = {
     movieId: null,
     movieName: null,
     fetch : (url, type) => {
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
-                return response.json()
-        })
-            .then(data => {
-                console.log(data.results)
-                if (data.results === null) {
-                    location.href = `${location.origin}/404.html`
-                    console.log('data not found')
-                } else {
-                    SEARCH.movieList = data.results
-                    IDB.addResultsToDB(data.results, type);
+        if (APP.isOnline === 'onLine') {
+            fetch(url)
+                .then(response => {
+                    console.log('fetch complete')
+                    if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
+                    return response.json()
+            })
+                .then(data => {
+                        SEARCH.movieList = data.results
+                        IDB.addResultsToDB(data.results, type);
+                    })
+                .then (data => {
+                    
                     if (type === 'searchStore') {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
@@ -101,11 +101,14 @@ const SEARCH = {
                         let currentLocation = location.href
                         location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
                     }
-                }
-        })
-            .catch(err => {
-                console.warn(err.message)
-        })
+                })
+                .catch(err => {
+                    console.warn(err.message)
+            })
+        } else {
+            console.log('you are not online')
+            location.pathname = '/404.html'
+        }
     },
     handleSearch: (ev) => {
         ev.preventDefault()
@@ -208,7 +211,6 @@ const IDB = {
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
         let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
-            // console.log(storeName + keyValue)
                 SEARCH.movieList = [...ev.target.result.results]
                 if (storeName === 'searchStore') {
                     document.getElementById('searchQuery').textContent = ev.target.result.keyword

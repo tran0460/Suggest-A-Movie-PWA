@@ -62,23 +62,21 @@ self.addEventListener('fetch', (ev) => {
     caches.match(ev.request).then((cacheRes) => {
         return (
             cacheRes ||
-            fetch(ev.request, { mode: 'cors', credentials: 'omit' }) 
+            fetch(ev.request) 
             .then((fetchRes) => {
-                // if (!fetchRes.ok) throw new Error(fetchRes.statusText)
+                if (fetchRes.status > 399) throw new Error(fetchRes.statusText)
                 return caches.open(dynamicCache).then((cache) => {
                     let copy = fetchRes.clone(); //make a copy of the response
                     cache.put(ev.request, copy); //put the copy into the cache
-                    limitCacheSize(dynamicCache, 30)
+                    limitCacheSize(dynamicCache, 40)
                     return fetchRes; //send the original response back up the chain
                 });
             })
             .catch((err) => {
                 console.log('SW fetch failed');
                 console.warn(err);
-                console.log(ev.request.mode)
-                return caches.match('/404.html').then(cacheRes => {
-                    console.log(cacheRes)
-                    return cacheRes
+                return caches.match('/404.html').then(res => {
+                    return res
                 })
             })
             );
