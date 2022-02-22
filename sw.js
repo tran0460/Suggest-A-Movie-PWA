@@ -97,11 +97,9 @@ self.addEventListener('fetch', (ev) => {
     }); 
     
     self.addEventListener('message', (ev) => {
-        console.log(ev.data);
-        if (ev.data.ONLINE) {
-            isOnline = ev.data.ONLINE;
-        }
-        
+        console.log('msg received')
+        isOnline = ev.data.ONLINE;
+        console.log(isOnline)
     });
     function sendMessage(msg) {
         self.clients.matchAll().then(function (clients) {

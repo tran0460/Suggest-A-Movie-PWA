@@ -1,6 +1,7 @@
 const APP = {
     sw: null,
     imageUrl: null,
+    isOnline: 'onLine' in navigator && navigator.onLine,
     configData: null,
     init: () => {
         console.log(navigator.onLine)
@@ -32,15 +33,15 @@ const APP = {
         window.addEventListener('popstate', APP.checkPage)
         navigator.serviceWorker.addEventListener('message', APP.gotMessage);
 
-        // window.addEventListener('online', APP.changeStatus);
-        // window.addEventListener('offline', APP.changeStatus);
+        window.addEventListener('online', APP.changeStatus);
+        window.addEventListener('offline', APP.changeStatus);
     },
-    // changeStatus: (ev) => {
-    // APP.isOnline = ev.type === 'online' ? true : false;
-    // navigator.serviceWorker.ready.then(registration => {
-    // registration.active.postMessage({ONLINE: APP.isOnline});
-    //     })
-    // },
+    changeStatus: (ev) => {
+    APP.isOnline = ev.type === 'online' ? true : false;
+    navigator.serviceWorker.ready.then(registration => {
+        registration.active.postMessage({ONLINE: APP.isOnline});
+        })
+    },
     registerSW: () => {
     navigator.serviceWorker.register('/sw.js').catch(function (err) {
         console.warn(err);
