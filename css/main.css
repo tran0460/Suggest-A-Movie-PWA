@@ -1,10 +1,28 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+html {
+    font-family: 'Montserrat', sans-serif;
+}
 .navContainer {
     display: flex !important;
     justify-content: center !important;
 }
 .forOfor {
     font-size: 10rem !important;
+}
+.bg-main {
+    background-color: #3d5a80 !important;
+}
+.w50 {
+    width: 50rem !important;
+}
+.black-outline {
+    border:2px solid #282828 !important;
+}
+#search-history {
+    padding: 0 !important;
+}
+p {
+    font-size: 1.5rem;
 }
 main {
     min-height: 100vh;
@@ -26,7 +44,7 @@ li {
     max-height: 5rem;
     overflow: auto;
 }
-@media only screen and (min-width: 37.5em) {
+@media only screen and (min-width: 45em) {
     .navContainer {
         justify-content: space-between !important;
     }

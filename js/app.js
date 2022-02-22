@@ -1,9 +1,9 @@
 const APP = {
     sw: null,
-    isOnline: 'onLine' in navigator && navigator.onLine,
     imageUrl: null,
     configData: null,
     init: () => {
+        console.log(navigator.onLine)
         APP.getConfig();
         APP.registerSW();
         APP.addListeners();
@@ -32,21 +32,15 @@ const APP = {
         window.addEventListener('popstate', APP.checkPage)
         navigator.serviceWorker.addEventListener('message', APP.gotMessage);
 
-        window.addEventListener('online', APP.changeStatus);
-        window.addEventListener('offline', APP.changeStatus);
+        // window.addEventListener('online', APP.changeStatus);
+        // window.addEventListener('offline', APP.changeStatus);
     },
-    sendMessage: (msg) => {
-        //send messages to the service worker
-        navigator.serviceWorker.ready.then((registration) => {
-            registration.active.postMessage(msg);
-        });
-    },
-    changeStatus: (ev) => {
-    APP.isOnline = ev.type === 'online' ? true : false;
-    navigator.serviceWorker.ready.then(registration => {
-    registration.active.postMessage({ONLINE: APP.isOnline, NAME: 'son' });
-        })
-    },
+    // changeStatus: (ev) => {
+    // APP.isOnline = ev.type === 'online' ? true : false;
+    // navigator.serviceWorker.ready.then(registration => {
+    // registration.active.postMessage({ONLINE: APP.isOnline});
+    //     })
+    // },
     registerSW: () => {
     navigator.serviceWorker.register('/sw.js').catch(function (err) {
         console.warn(err);
@@ -61,6 +55,16 @@ const APP = {
         let query = location.href.split('#')[1]
         switch (document.body.id) {
             case 'home':
+                let tx = IDB.DB.transaction('searchStore', 'readwrite');
+                let searchStore = tx.objectStore('searchStore');
+                let getKeys = searchStore.getAllKeys()
+                getKeys.onsuccess = (ev) => {
+                    ev.target.result.forEach (key => {
+                        let li = document.createElement('li')
+                        li.textContent = key
+                        document.getElementById('search-history').append(li)
+                    })
+                }
                 break;
             case 'result':
                 IDB.getDBResults('searchStore', query)
@@ -69,6 +73,16 @@ const APP = {
                 IDB.getDBResults('similarStore', parseInt(query))
                 break;
             case 'error':
+                let tx = IDB.DB.transaction('searchStore', 'readwrite');
+                let searchStore = tx.objectStore('searchStore');
+                let getKeys = searchStore.getAllKeys()
+                getKeys.onsuccess = (ev) => {
+                    ev.target.result.forEach (key => {
+                        let li = document.createElement('li')
+                        li.textContent = key
+                        document.getElementById('search-history').append(li)
+                    })
+                }
                 break;
         }
     },
@@ -81,10 +95,12 @@ const SEARCH = {
     movieId: null,
     movieName: null,
     fetch : (url, type) => {
-        if (APP.isOnline === 'onLine') {
+        if (navigator.onLine) {
             fetch(url)
                 .then(response => {
+                    console.log(navigator)
                     console.log('fetch complete')
+                    console.log(navigator.onLine)
                     if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
                     return response.json()
             })
@@ -93,7 +109,6 @@ const SEARCH = {
                         IDB.addResultsToDB(data.results, type);
                     })
                 .then (data => {
-                    
                     if (type === 'searchStore') {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
@@ -106,8 +121,7 @@ const SEARCH = {
                     console.warn(err.message)
             })
         } else {
-            console.log('you are not online')
-            location.pathname = '/404.html'
+            location.href = `${location.origin}/404.html`
         }
     },
     handleSearch: (ev) => {
@@ -186,6 +200,7 @@ const IDB = {
         getRequest.onsuccess = (ev) => {
             if (ev.target.result != undefined) {
                 if (SEARCH.input != null) {
+                    console.log('')
                     if (storeName === 'searchStore') {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
