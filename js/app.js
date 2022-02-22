@@ -32,7 +32,7 @@ const APP = {
         document.querySelector('.searchBtn').addEventListener('click', SEARCH.handleSearch)
         window.addEventListener('popstate', APP.checkPage)
         navigator.serviceWorker.addEventListener('message', APP.gotMessage);
-
+        //online listeners
         window.addEventListener('online', APP.changeStatus);
         window.addEventListener('offline', APP.changeStatus);
     },
@@ -71,7 +71,7 @@ const APP = {
                 IDB.getDBResults('searchStore', query)
                 break;
             case 'suggestions':
-                IDB.getDBResults('similarStore', parseInt(query))
+                IDB.getDBResults('similarStore', parseInt(query.split('&')[0]))
                 break;
             case 'error':
                 let getKeys2 = searchStore.getAllKeys()
@@ -113,8 +113,9 @@ const SEARCH = {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
                     if (type === 'similarStore') {
+                        console.log(SEARCH.movieName)
                         let currentLocation = location.href
-                        location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}`
+                        location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}&${SEARCH.movieName}`
                     }
                 })
                 .catch(err => {
@@ -205,6 +206,7 @@ const IDB = {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
                     if (storeName === 'similarStore') {
+                        console.log(ev.target.result)
                         location.href = `${location.origin}/suggestions.html#${keyValue}`
                     }
                 }
