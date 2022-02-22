@@ -51,17 +51,17 @@ const APP = {
         });
     },
     checkPage: () => {
+        let tx = IDB.DB.transaction('searchStore', 'readwrite');
+        let searchStore = tx.objectStore('searchStore');
         console.log('checkPage running')
         let query = location.href.split('#')[1]
         switch (document.body.id) {
             case 'home':
-                let tx = IDB.DB.transaction('searchStore', 'readwrite');
-                let searchStore = tx.objectStore('searchStore');
                 let getKeys = searchStore.getAllKeys()
                 getKeys.onsuccess = (ev) => {
                     ev.target.result.forEach (key => {
                         let li = document.createElement('li')
-                        li.textContent = key
+                        li.innerHTML = `<p>${key}</p>`
                         document.getElementById('search-history').append(li)
                     })
                 }
@@ -73,13 +73,12 @@ const APP = {
                 IDB.getDBResults('similarStore', parseInt(query))
                 break;
             case 'error':
-                let tx = IDB.DB.transaction('searchStore', 'readwrite');
-                let searchStore = tx.objectStore('searchStore');
-                let getKeys = searchStore.getAllKeys()
-                getKeys.onsuccess = (ev) => {
+                let getKeys2 = searchStore.getAllKeys()
+                getKeys2.onsuccess = (ev) => {
                     ev.target.result.forEach (key => {
+                        console.log('appending')
                         let li = document.createElement('li')
-                        li.textContent = key
+                        li.innerHTML = `<p>${key}</p>`
                         document.getElementById('search-history').append(li)
                     })
                 }
