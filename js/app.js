@@ -176,10 +176,10 @@ const IDB = {
         let searchStore = tx.objectStore(storeName);
         if (storeName === 'searchStore' ){
         let formatData = {
-            keyword: SEARCH.input,
+            keyword: SEARCH.input.toLowerCase(),
             results: obj
         };
-            let addRequest = searchStore.add(formatData, SEARCH.input); 
+            let addRequest = searchStore.add(formatData, SEARCH.input.toLowerCase()); 
             addRequest.onsuccess = () => {
             }
         }
@@ -197,11 +197,10 @@ const IDB = {
     checkDb: (storeName, keyValue) => {
         console.log('checkDB running')
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
-        let getRequest = getFromStore.get(keyValue);
+        let getRequest = getFromStore.get(keyValue.toLowerCase());
         getRequest.onsuccess = (ev) => {
             if (ev.target.result != undefined) {
                 if (SEARCH.input != null) {
-                    console.log('')
                     if (storeName === 'searchStore') {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
@@ -213,7 +212,7 @@ const IDB = {
                 } else {
                     //fetch the url
                     if (typeof keyValue === 'string') {
-                        let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${keyValue.toLowerCase()}`;
+                        let url = `${SEARCH.baseUrl}search/movie?api_key=${SEARCH.api}&query=${keyValue}`;
                         SEARCH.fetch(url, storeName)
                     } 
                     if (typeof keyValue === 'number') {
@@ -226,7 +225,7 @@ const IDB = {
     getDBResults: (storeName, keyValue) => {
         console.log('getDBResults running')
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
-        let getRequest = getFromStore.get(keyValue);
+        let getRequest = getFromStore.get(keyValue.toLowerCase());
         getRequest.onsuccess = (ev) => {
                 SEARCH.movieList = [...ev.target.result.results]
                 if (storeName === 'searchStore') {

@@ -28,10 +28,11 @@ const cacheList = [
 ]
 const limitCacheSize = (nm, size) => {
     caches.open(nm).then((cache) => {
+        console.log('cache opened')
         cache.keys().then((keys) => {
-            // console.log(keys)
-            if (keys.length > size) {
-                cache.delete(keys[0]).then(() => {
+            let numOfKeys = keys.length;
+            if (numOfKeys > size) {
+                return cache.delete(keys[numOfKeys - 1]).then(() => {
                 limitCacheSize(nm, size);
                 });
             }
