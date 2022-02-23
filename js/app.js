@@ -196,8 +196,10 @@ const IDB = {
     },
     checkDb: (storeName, keyValue) => {
         console.log('checkDB running')
+        console.log(keyValue);
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
-        let getRequest = getFromStore.get(keyValue.toLowerCase());
+        if (typeof keyValue != 'number') keyValue = keyValue.toLowerCase()
+        let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
             if (ev.target.result != undefined) {
                 if (SEARCH.input != null) {
@@ -225,7 +227,8 @@ const IDB = {
     getDBResults: (storeName, keyValue) => {
         console.log('getDBResults running')
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
-        let getRequest = getFromStore.get(keyValue.toLowerCase());
+        if (typeof keyValue != 'number') keyValue = keyValue.toLowerCase()
+        let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
                 SEARCH.movieList = [...ev.target.result.results]
                 if (storeName === 'searchStore') {
@@ -252,7 +255,8 @@ const MEDIA = {
                 <img class="card-img-top" src="${source}" alt="Card image cap">
                 <div class="card-body">
                 <h5 class="card-title">${movie.original_title}</h5>
-                <p class="card-text">${movie.overview}</p>
+                <p class="card-text">IMDB Score: ${movie.vote_average.toFixed(1)}</p>
+                <p class="card-text">Release date : ${movie.release_date}</p>
                 <a  class="btn btn-primary pe-auto" id="get-similar">Similar movies</a>
                 </div>
             </div>

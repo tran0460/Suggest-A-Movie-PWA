@@ -21,7 +21,7 @@ html {
 #search-history {
     padding: 0 !important;
 }
-p {
+p:not(p.card-text) {
     font-size: 1.5rem;
 }
 main {
