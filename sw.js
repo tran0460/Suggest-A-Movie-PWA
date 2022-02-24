@@ -26,19 +26,21 @@ const cacheList = [
     '/favicon.ico',
     '/manifest.json'
 ]
-const limitCacheSize = (nm, size) => {
+function limitCacheSize(nm, size) {
+    // console.log('abcd')
+    //remove some files from the dynamic cache
     caches.open(nm).then((cache) => {
-        console.log('cache opened')
-        cache.keys().then((keys) => {
-            let numOfKeys = keys.length;
-            if (numOfKeys > size) {
-                return cache.delete(keys[numOfKeys - 1]).then(() => {
-                limitCacheSize(nm, size);
-                });
-            }
+        return cache.keys().then((keys) => {
+        let numOfKeys = keys.length;
+        // console.log(size, numOfKeys)
+        if (numOfKeys > size) {
+        return cache.delete(keys[0]).then(() => {
+            return limitCacheSize(nm, size);
+            });
+        }
         });
     });
-};
+}
 self.addEventListener('install', (ev) => {
     ev.waitUntil(
         caches.open(staticCache)
@@ -71,16 +73,20 @@ self.addEventListener('activate', (ev) => {
 
 self.addEventListener('fetch', (ev) => {
     ev.respondWith(
-    caches.match(ev.request).then((cacheRes) => {
-        return (
-            cacheRes ||
-            fetch(ev.request) 
-            .then((fetchRes) => {
+        caches.match(ev.request).then((cacheRes) => {
+            return (
+                cacheRes || 
+                fetch(ev.request) 
+                .then((fetchRes) => {
+                // limitCacheSize(dynamicCache, 30)
+                console.log(isOnline)
                 if (fetchRes.status > 399) throw new Error(fetchRes.statusText)
                 return caches.open(dynamicCache).then((cache) => {
                     let copy = fetchRes.clone(); //make a copy of the response
                     cache.put(ev.request, copy); //put the copy into the cache
-                    limitCacheSize(dynamicCache, 30)
+                    cache.keys().then((keys) => {
+                        if (keys.length > 30) limitCacheSize(dynamicCache, 20)
+                    })
                     return fetchRes; //send the original response back up the chain
                 });
             })
@@ -96,17 +102,19 @@ self.addEventListener('fetch', (ev) => {
         })
         ); //what do we want to send to the browser?
     }); 
-    
-    self.addEventListener('message', (ev) => {
-        console.log('msg received')
+self.addEventListener('message', (ev) => {
+    console.log('msg received')
+        if (ev.data.ONLINE){
         isOnline = ev.data.ONLINE;
         console.log(isOnline)
+        }
+
+});
+function sendMessage(msg) {
+    self.clients.matchAll().then(function (clients) {
+        if (clients && clients.length) {
+            clients[0].postMessage(msg);
+        }
     });
-    function sendMessage(msg) {
-        self.clients.matchAll().then(function (clients) {
-            if (clients && clients.length) {
-                clients[0].postMessage(msg);
-            }
-        });
-    }
-    
+}
+

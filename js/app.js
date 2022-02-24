@@ -55,7 +55,8 @@ const APP = {
         let tx = IDB.DB.transaction('searchStore', 'readwrite');
         let searchStore = tx.objectStore('searchStore');
         console.log('checkPage running')
-        let query = location.href.split('#')[1]
+        let url = new URL(location.href)
+        let params = url.searchParams
         switch (document.body.id) {
             case 'home':
                 let getKeys = searchStore.getAllKeys()
@@ -68,10 +69,12 @@ const APP = {
                 }
                 break;
             case 'result':
-                IDB.getDBResults('searchStore', query)
+                let keyword = params.get('key')
+                IDB.getDBResults('searchStore', keyword)
                 break;
             case 'suggestions':
-                IDB.getDBResults('similarStore', parseInt(query.split('&')[0]))
+                let id = params.get('id')
+                IDB.getDBResults('similarStore', parseInt(id))
                 break;
             case 'error':
                 let getKeys2 = searchStore.getAllKeys()
@@ -110,12 +113,12 @@ const SEARCH = {
                     })
                 .then (data => {
                     if (type === 'searchStore') {
-                        location.href = `${location.origin}/result.html#${SEARCH.input}`
+                        location.href = `${location.origin}/result.html?key=${SEARCH.input}`
                     }
                     if (type === 'similarStore') {
                         console.log(SEARCH.movieName)
                         let currentLocation = location.href
-                        location.href = `${location.origin}/suggestions.html#${SEARCH.movieId}&${SEARCH.movieName}`
+                        location.href = `${location.origin}/suggestions.html?id=${SEARCH.movieId}&name=${SEARCH.movieName}`
                     }
                 })
                 .catch(err => {
@@ -202,15 +205,16 @@ const IDB = {
         let getRequest = getFromStore.get(keyValue);
         getRequest.onsuccess = (ev) => {
             if (ev.target.result != undefined) {
+                console.log(ev.target.result)
                 if (SEARCH.input != null) {
                     if (storeName === 'searchStore') {
                         location.href = `${location.origin}/result.html#${SEARCH.input}`
                     }
+                }
                     if (storeName === 'similarStore') {
                         console.log(ev.target.result)
                         location.href = `${location.origin}/suggestions.html#${keyValue}`
                     }
-                }
                 } else {
                     //fetch the url
                     if (typeof keyValue === 'string') {
