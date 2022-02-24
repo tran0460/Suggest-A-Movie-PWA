@@ -122,11 +122,12 @@ const SEARCH = {
                     }
                 })
                 .catch(err => {
+                    console.log('fetch failed')
                     console.warn(err.message)
-            })
-        } else {
-            location.href = `${location.origin}/404.html`
-        }
+                })
+                } else {
+                    location.href = `${location.origin}/404.html`
+                    }
     },
     handleSearch: (ev) => {
         ev.preventDefault()

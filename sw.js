@@ -2,6 +2,7 @@ const version = 2;
 let isOnline = true;
 const staticCache = `PWAStaticCacheVersion${version}`
 const dynamicCache = `PWADynamicCacheVersion${version}`
+const imgCache = `PWAImgCacheVersion${version}`
 const cacheList = [
     '/',
     '/404.html',
@@ -58,7 +59,7 @@ self.addEventListener('activate', (ev) => {
         return Promise.all(
             keys
             .filter((key) => {
-                if (key === staticCache || key === dynamicCache) {
+                if (key === staticCache || key === dynamicCache || key === imgCache) {
                 return false;
                 } else {
                 return true;
@@ -78,30 +79,89 @@ self.addEventListener('fetch', (ev) => {
                 cacheRes || 
                 fetch(ev.request) 
                 .then((fetchRes) => {
-                // limitCacheSize(dynamicCache, 30)
+                    console.log(fetchRes)
                 console.log(isOnline)
                 if (fetchRes.status > 399) throw new Error(fetchRes.statusText)
-                return caches.open(dynamicCache).then((cache) => {
-                    let copy = fetchRes.clone(); //make a copy of the response
-                    cache.put(ev.request, copy); //put the copy into the cache
-                    cache.keys().then((keys) => {
-                        if (keys.length > 20) limitCacheSize(dynamicCache, 20)
-                    })
-                    return fetchRes; //send the original response back up the chain
-                });
+
+                if (fetchRes.type === 'opaque'){
+                    return caches.open(imgCache).then((cache) => {
+                        let copy = fetchRes.clone(); //make a copy of the response
+                        cache.put(ev.request, copy); //put the copy into the cache
+                        cache.keys().then((keys) => {
+                            if (keys.length > 30) limitCacheSize(imgCache, 30)
+                        })
+                        return fetchRes; //send the original response back up the chain
+                    });
+                } else {
+                    return caches.open(dynamicCache).then((cache) => {
+                        let copy = fetchRes.clone(); //make a copy of the response
+                        cache.put(ev.request, copy); //put the copy into the cache
+                        return fetchRes; //send the original response back up the chain
+                    });
+                }
             })
             .catch((err) => {
                 console.log('SW fetch failed');
                 console.warn(err);
                 console.log(ev.request.method)
-                return caches.match('/404.html').then(res => {
-                    return res
-                })
+                if (ev.request.mode === "navigate") {
+                    return caches.match("/404.html").then((cacheRes) => {
+                        return cacheRes;
+                    });
+                }
             })
             );
         })
         ); //what do we want to send to the browser?
     }); 
+// self.addEventListener("fetch", (ev) => {
+//       console.log(ev);
+//       ev.respondWith(
+//         caches.match(ev.request.url).then((cacheRes) => {
+//           if (cacheRes) {
+//             return cacheRes;
+//           } // End here if resource is in cache.
+//           console.warn(isOnline);
+//           if (!isOnline) {
+//             // Check if not online, if offline go to 404
+//             // let userLocation = location.href.userLocation.replace(
+//             //   "index",
+//             //   "results"
+//             // );
+//             location.href = "http://localhost:5501/404.html"; // navigate to 404
+//             return;
+//           } else {
+//             fetch(ev.request)
+//               .then((fetchRes) => {
+//                 if (fetchRes.status > 399)
+//                   throw new NetworkError(
+//                     fetchRes.message,
+//                     fetchRes.request.status,
+//                     fetchRes.statusText
+//                   );
+//                 // if (fetchRes.status > 399) throw new Error(fetchRes.statusText);
+//                 return caches.open(dynamicCache).then((cache) => {
+//                   let copy = fetchRes.clone();
+//                   cache.put(ev.request, copy);
+//                     cache.keys().then((keys) => {
+//                         if (keys.length > 20) limitCacheSize(dynamicCache, 20)
+//                     })
+//                   return fetchRes;
+//                 });
+//               })
+//               .catch((err) => {
+//                 console.log("SW fetch failed");
+//                 console.warn(err);
+//                 if (ev.request.mode === "navigate") {
+//                   return caches.match("/404.html").then((cacheRes) => {
+//                     return cacheRes;
+//                   });
+//                 }
+//               });
+//           }
+//         })
+//       );
+//     });
 self.addEventListener('message', (ev) => {
     console.log('msg received')
         if (ev.data.ONLINE){
