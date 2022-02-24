@@ -85,7 +85,7 @@ self.addEventListener('fetch', (ev) => {
                     let copy = fetchRes.clone(); //make a copy of the response
                     cache.put(ev.request, copy); //put the copy into the cache
                     cache.keys().then((keys) => {
-                        if (keys.length > 30) limitCacheSize(dynamicCache, 20)
+                        if (keys.length > 20) limitCacheSize(dynamicCache, 20)
                     })
                     return fetchRes; //send the original response back up the chain
                 });

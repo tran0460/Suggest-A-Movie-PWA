@@ -208,12 +208,13 @@ const IDB = {
                 console.log(ev.target.result)
                 if (SEARCH.input != null) {
                     if (storeName === 'searchStore') {
-                        location.href = `${location.origin}/result.html#${SEARCH.input}`
+                        location.href = `${location.origin}/result.html?key=${SEARCH.input}`
                     }
                 }
                     if (storeName === 'similarStore') {
                         console.log(ev.target.result)
                         location.href = `${location.origin}/suggestions.html#${keyValue}`
+                        location.href = `${location.origin}/suggestions.html?id=${keyValue}&name=${SEARCH.movieName}`
                     }
                 } else {
                     //fetch the url
