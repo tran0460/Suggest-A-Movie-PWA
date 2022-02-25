@@ -4,7 +4,6 @@ const APP = {
     isOnline: 'onLine' in navigator && navigator.onLine,
     configData: null,
     init: () => {
-        console.log(navigator.onLine)
         APP.getConfig();
         APP.registerSW();
         APP.addListeners();
@@ -200,7 +199,6 @@ const IDB = {
     },
     checkDb: (storeName, keyValue) => {
         console.log('checkDB running')
-        console.log(keyValue);
         let getFromStore = IDB.createTransaction(storeName).objectStore(storeName)
         if (typeof keyValue != 'number') keyValue = keyValue.toLowerCase()
         let getRequest = getFromStore.get(keyValue);
@@ -249,6 +247,16 @@ const IDB = {
 const MEDIA = {
     buildCards: (data) => {
         if (document.querySelector('.display-area')) {document.querySelector('.display-area').innerHTML = ''
+        if (data.length === 0) {
+            document.querySelector('.display-area').innerHTML = 
+            `
+            <p class = "text-center mt-5">
+            We couldn't find what you were looking for, please try a different keyword
+            </p> 
+            `
+            return
+        }
+        let df = new DocumentFragment
         data.forEach(movie => {
             let li = document.createElement('li');
             let source =  `${APP.imageUrl}w154${movie.poster_path}`
@@ -267,8 +275,9 @@ const MEDIA = {
                 </div>
             </div>
             `
-            document.querySelector('.display-area').append(li)
+            df.append(li)
         })
+        document.querySelector('.display-area').append(df)
         document.querySelectorAll('div.card').forEach (btn => {
             btn.addEventListener('click', SEARCH.handleSearch)
         })}
