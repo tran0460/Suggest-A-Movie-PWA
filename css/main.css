@@ -1,4 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+h1 {
+    margin-top: 0;
+    font-size: 3.052rem;
+}
+
+h2 {font-size: 2.441rem;}
+
+h3 {font-size: 1.953rem;}
+
+h4 {font-size: 1.563rem;}
+
+h5 {font-size: 1.25rem;}
 html {
     font-family: 'Montserrat', sans-serif;
 }
@@ -6,14 +18,17 @@ html {
     display: flex !important;
     justify-content: center !important;
 }
+.input-length {
+    width: 70vw !important;
+}
 .forOfor {
     font-size: 10rem !important;
 }
 .bg-main {
     background-color: #3d5a80 !important;
 }
-.w50 {
-    width: 50rem !important;
+.tmdb-long {
+    width: 100% !important;
 }
 .black-outline {
     border:2px solid #282828 !important;
@@ -45,6 +60,13 @@ li {
     overflow: auto;
 }
 @media only screen and (min-width: 45em) {
+    .input-length {
+        width: 50vw !important;
+        max-width: 50rem;
+    }
+    .tmdb-long {
+        width: 50% !important;
+    }
     .navContainer {
         justify-content: space-between !important;
     }

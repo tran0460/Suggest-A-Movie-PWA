@@ -268,10 +268,10 @@ const MEDIA = {
             <div class="card m-2 pe-none" id=${movie.id} style="width: 18rem;">
                 <img class="card-img-top" src="${source}" alt="Card image cap">
                 <div class="card-body">
-                <h5 class="card-title">${movie.original_title}</h5>
+                <h2 class="h5 card-title">${movie.original_title}</h2>
                 <p class="card-text">IMDB Score: ${movie.vote_average.toFixed(1)}</p>
                 <p class="card-text">Release date : ${movie.release_date}</p>
-                <a  class="btn btn-primary pe-auto" id="get-similar">Similar movies</a>
+                <a class="btn btn-primary pe-auto" id="get-similar">Similar movies</a>
                 </div>
             </div>
             `
