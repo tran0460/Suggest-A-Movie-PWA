@@ -265,13 +265,13 @@ const MEDIA = {
             }
             li.innerHTML = 
             `
-            <div class="card m-2 pe-none" id=${movie.id} style="width: 18rem;">
+            <div class="card h-100 m-2 mt-2  pe-none" id=${movie.id} style="width: 18rem;">
                 <img class="card-img-top" src="${source}" alt="Card image cap">
-                <div class="card-body">
+                <div class="card-body d-flex flex-column">
                 <h2 class="h5 card-title">${movie.original_title}</h2>
                 <p class="card-text">IMDB Score: ${movie.vote_average.toFixed(1)}</p>
                 <p class="card-text">Release date : ${movie.release_date}</p>
-                <a class="btn btn-primary pe-auto" id="get-similar">Similar movies</a>
+                <a class="btn btn-primary pe-auto mt-auto" id="get-similar">Similar movies</a>
                 </div>
             </div>
             `
