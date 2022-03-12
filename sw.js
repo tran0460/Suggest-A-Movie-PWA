@@ -4,28 +4,28 @@ const staticCache = `PWAStaticCacheVersion${version}`
 const dynamicCache = `PWADynamicCacheVersion${version}`
 const imgCache = `PWAImgCacheVersion${version}`
 const cacheList = [
-    '/',
-    '/404.html',
-    '/index.html',
-    '/result.html',
-    '/suggestions.html',
-    '/js/app.js',
-    '/sw.js',
-    '/css/main.css',
-    '/img/sad-face.png',
-    '/img/placeholder.png',
-    '/img/tmdb-svg.svg',
+    './',
+    './404.html',
+    './index.html',
+    './result.html',
+    './suggestions.html',
+    './js/app.js',
+    './sw.js',
+    './css/main.css',
+    './img/sad-face.png',
+    './img/placeholder.png',
+    './img/tmdb-svg.svg',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css',
     'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
-    "/img/tmdb-big-logo.svg",
-    '/img/favicon-16x16.png',
-    '/img/favicon-32x32.png',
-    '/img/apple-touch-icon.png',
-    '/img/mstile-150x150.png',
-    '/img/android-chrome-192x192.png',
-    '/img/android-chrome-512x512.png',
-    '/favicon.ico',
-    '/manifest.json'
+    "./img/tmdb-big-logo.svg",
+    './img/favicon-16x16.png',
+    './img/favicon-32x32.png',
+    './img/apple-touch-icon.png',
+    './img/mstile-150x150.png',
+    './img/android-chrome-192x192.png',
+    './img/android-chrome-512x512.png',
+    './favicon.ico',
+    './manifest.json'
 ]
 function limitCacheSize(nm, size) {
     //remove some files from the dynamic cache
