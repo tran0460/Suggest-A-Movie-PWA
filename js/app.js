@@ -42,7 +42,7 @@ const APP = {
         })
     },
     registerSW: () => {
-    navigator.serviceWorker.register('./sw.js').catch(function (err) {
+    navigator.serviceWorker.register('/MAD9022-Suggest-A-Movie-PWA/sw.js').catch(function (err) {
         console.warn(err);
     });
     navigator.serviceWorker.ready.then((registration) => {
