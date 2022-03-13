@@ -5,19 +5,12 @@ const dynamicCache = `PWADynamicCacheVersion${version}`
 const imgCache = `PWAImgCacheVersion${version}`
 const cacheList = [
     './',
-    '/404.html',
-    '/index.html',
-    '/result.html',
-    '/suggestions.html',
-    '/js/app.js',
-    '/sw.js',
-    './css/main.css',
-    '/MAD9022-Suggest-A-Movie-PWA/404.html',
-    '/MAD9022-Suggest-A-Movie-PWA/index.html',
-    '/MAD9022-Suggest-A-Movie-PWA/result.html',
-    '/MAD9022-Suggest-A-Movie-PWA/suggestions.html',
-    '/MAD9022-Suggest-A-Movie-PWA/js/app.js',
-    '/MAD9022-Suggest-A-Movie-PWA/sw.js',
+    './404.html',
+    './index.html',
+    './result.html',
+    './suggestions.html',
+    './js/app.js',
+    './sw.js',
     './css/main.css',
     './img/sad-face.png',
     './img/placeholder.png',
@@ -128,4 +121,3 @@ function sendMessage(msg) {
         }
     });
 }
-
