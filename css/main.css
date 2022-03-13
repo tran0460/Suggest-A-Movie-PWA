@@ -42,10 +42,6 @@ p:not(p.card-text) {
 main {
     min-height: 100vh;
 }
-img {
-    max-height: 20rem;
-    padding: 1rem;
-}
 img.tmdb {
     height: 4rem !important;
 }
