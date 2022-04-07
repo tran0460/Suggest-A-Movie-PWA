@@ -21,6 +21,7 @@ const APP = {
         })
         .then(data => {
             APP.imageUrl = data.images.secure_base_url
+            console.log(APP.imageUrl)
             APP.configData = data.images
         })
         .catch(error => 
@@ -259,7 +260,7 @@ const MEDIA = {
         let df = new DocumentFragment
         data.forEach(movie => {
             let li = document.createElement('li');
-            let source =  `${APP.imageUrl}w154${movie.poster_path}`
+            let source =  `${APP.imageUrl}w500${movie.poster_path}`
             if (movie.poster_path === null) {
                 source = './img/placeholder.png'
             }
